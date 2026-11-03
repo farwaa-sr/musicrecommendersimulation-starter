@@ -61,16 +61,24 @@ def load_songs(csv_path: str) -> List[Dict]:
             songs.append(row)
     return songs
 
+# Scoring weights (max points per rule). Edit these to run weight experiments.
+W_ENERGY = 7.0
+W_VALENCE = 2.5
+W_ACOUSTIC = 1.0
+W_MOOD = 2.0
+W_GENRE = 0.5
+MAX_SCORE = W_ENERGY + W_VALENCE + W_ACOUSTIC + W_MOOD + W_GENRE
+
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """Score one song out of 10 against the user's preferences and return (score, reasons)."""
+    """Score one song out of MAX_SCORE against the user's preferences and return (score, reasons)."""
     score = 0.0
     reasons: List[str] = []
 
     # Numeric features: reward closeness to the target, not higher or lower values.
     numeric_rules = (
-        ("energy", "energy", 3.5),
-        ("valence", "valence", 2.5),
-        ("acousticness", "acousticness", 1.0),
+        ("energy", "energy", W_ENERGY),
+        ("valence", "valence", W_VALENCE),
+        ("acousticness", "acousticness", W_ACOUSTIC),
     )
     for pref_key, song_key, max_points in numeric_rules:
         if pref_key not in user_prefs:
@@ -81,7 +89,7 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
         reasons.append(f"{song_key} gap {gap:.2f} (+{points:.2f})")
 
     # Categorical features: exact match bonus.
-    for pref_key, song_key, bonus in (("mood", "mood", 2.0), ("genre", "genre", 1.0)):
+    for pref_key, song_key, bonus in (("mood", "mood", W_MOOD), ("genre", "genre", W_GENRE)):
         if song[song_key] == user_prefs.get(pref_key):
             score += bonus
             reasons.append(f"{song_key} match (+{bonus:.1f})")
