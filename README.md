@@ -97,6 +97,56 @@ You can include a simple diagram or bullet list if helpful.
 
 ---
 
+## Sample Recommendation Output
+
+Output of `python -m src.main` for the default `pop_happy` profile:
+
+```text
+Loaded songs: 23
+
+Profile: pop / happy, energy 0.80, valence 0.80, acousticness 0.20
+
+Top recommendations
+============================================================
+1. Sunrise City by Neon Echo  [pop, happy]
+   Score: 9.81 / 10
+     - energy gap 0.02 (+3.43)
+     - valence gap 0.04 (+2.40)
+     - acousticness gap 0.02 (+0.98)
+     - mood match (+2.0)
+     - genre match (+1.0)
+
+2. Rooftop Lights by Indigo Parade  [indie pop, happy]
+   Score: 8.69 / 10
+     - energy gap 0.04 (+3.36)
+     - valence gap 0.01 (+2.48)
+     - acousticness gap 0.15 (+0.85)
+     - mood match (+2.0)
+
+3. Gym Hero by Max Pulse  [pop, intense]
+   Score: 7.32 / 10
+     - energy gap 0.13 (+3.04)
+     - valence gap 0.03 (+2.42)
+     - acousticness gap 0.15 (+0.85)
+     - genre match (+1.0)
+
+4. Concrete Crown by Kid Marlow  [hip hop, confident]
+   Score: 6.40 / 10
+     - energy gap 0.02 (+3.43)
+     - valence gap 0.18 (+2.05)
+     - acousticness gap 0.08 (+0.92)
+
+5. Neon Pulse by Voltage Kid  [edm, euphoric]
+   Score: 6.27 / 10
+     - energy gap 0.16 (+2.94)
+     - valence gap 0.00 (+2.50)
+     - acousticness gap 0.17 (+0.83)
+```
+
+Sunrise City ranks first because it matches on both mood and genre and is within 0.04 of every numeric target. Rooftop Lights is second on a mood match alone (its genre is "indie pop", not "pop"). Gym Hero is third on a genre match even though its mood is "intense", which shows how the numeric closeness points keep it competitive.
+
+---
+
 ## Getting Started
 
 ### Setup

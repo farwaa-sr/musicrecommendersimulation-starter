@@ -21,16 +21,13 @@ Prompts:
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+The recommender compares every song in the catalog to a "taste profile" and gives each one a score out of 10. A profile says what the listener wants: a favorite genre, a favorite mood, and target levels for energy, valence (how happy or dark a song sounds), and acousticness (how acoustic versus electronic it is).
 
-Prompts:  
+For the three number-based traits, the model rewards songs that are close to the target, not songs that are simply higher or lower. If a listener wants medium-low energy, a very calm song and a very intense song both lose points, and the song nearest the target gets the most. Energy is worth up to 3.5 points, valence up to 2.5, and acousticness up to 1. Mood and genre are all-or-nothing: a matching mood adds 2 points and a matching genre adds 1. I weighted mood above genre because mood describes what the listener wants right now, and genre labels are sparse in my small catalog.
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+Once every song has a score, the model sorts them from highest to lowest (ties go to the song closer on energy) and shows the top five. Each result also lists the reasons behind its score, such as "mood match (+2.0)", so the listener can see why it was picked.
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+Changes from the starter: the starter only suggested genre, mood and energy. I added valence and acousticness, dropped tempo and danceability because they mostly repeat what energy already says, and made mood count for more than genre. The whole thing runs from the command line (`python -m src.main`).
 
 ---
 
