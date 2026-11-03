@@ -26,11 +26,11 @@ Real-world recommenders like Spotify or YouTube work in two stages. First, they 
 | Feature | Type | Used in scoring? |
 |---|---|---|
 | `id`, `title`, `artist` | int / str | No, identification and display only |
-| `genre` | str | Yes, exact match bonus (weight 0.10) |
-| `mood` | str | Yes, exact match bonus (weight 0.20) |
-| `energy` | float 0-1 | Yes, closeness to target (weight 0.35) |
-| `valence` | float 0-1 | Yes, closeness to target (weight 0.25) |
-| `acousticness` | float 0-1 | Yes, closeness to target (weight 0.10) |
+| `genre` | str | Yes, exact match bonus (max 1.0 pt) |
+| `mood` | str | Yes, exact match bonus (max 2.0 pts) |
+| `energy` | float 0-1 | Yes, closeness to target (max 3.5 pts) |
+| `valence` | float 0-1 | Yes, closeness to target (max 2.5 pts) |
+| `acousticness` | float 0-1 | Yes, closeness to target (max 1.0 pt) |
 | `tempo_bpm` | float | No, mostly redundant with energy |
 | `danceability` | float 0-1 | No, mostly redundant with energy |
 
@@ -44,17 +44,46 @@ Real-world recommenders like Spotify or YouTube work in two stages. First, they 
 | `target_valence` | float 0-1 | `Song.valence` (to be added to the starter profile) |
 | `likes_acoustic` | bool | `Song.acousticness`, mapped to a target of about 0.8 if true and 0.2 if false |
 
-Scoring rule for each song:
+### Algorithm Recipe
+
+Each song is scored out of 10 points against the user's profile:
+
+| Rule | Max points | How it is computed |
+|---|---|---|
+| Energy | 3.5 | `3.5 * (1 - abs(song.energy - target_energy))` |
+| Valence | 2.5 | `2.5 * (1 - abs(song.valence - target_valence))` |
+| Mood match | 2.0 | `2.0` if `song.mood == favorite_mood`, else `0` |
+| Acousticness | 1.0 | `1.0 * (1 - abs(song.acousticness - acoustic_target))` |
+| Genre match | 1.0 | `1.0` if `song.genre == favorite_genre`, else `0` |
+
+Numeric features reward closeness to the user's target, not higher or lower values. Mood is weighted above genre because genre labels are sparse in the catalog and mood better describes what the listener wants right now.
+
+**Ranking rule:** sort all songs by score (highest first), break ties by smaller energy distance and then lower `id`, and return the top K with a short "because" explanation.
+
+**Data flow**
 
 ```
-score = 0.35*(1 - |energy - target_energy|)
-      + 0.25*(1 - |valence - target_valence|)
-      + 0.20*(mood == favorite_mood)
-      + 0.10*(1 - |acousticness - acoustic_target|)
-      + 0.10*(genre == favorite_genre)
+songs.csv -> load_songs -> list of song dicts
+user_prefs ----------------------------+
+                                        v
+for each song: score_song(prefs, song) -> (song, score, reasons)
+                                        v
+sort by score, break ties, keep top K -> printed recommendations
 ```
 
-Ranking rule: sort all songs by score (highest first), break ties by smaller energy distance and then lower `id`, and return the top K.
+**Example profiles** (in `src/main.py`)
+
+- `chill_lofi`: genre lofi, mood chill, energy 0.40, valence 0.60, acousticness 0.80
+- `intense_rock`: genre rock, mood intense, energy 0.90, valence 0.45, acousticness 0.10
+
+### Expected biases and limits
+
+- **Exact-match categories:** mood and genre need identical strings, so "indie pop" earns nothing against "pop" and "chill" earns nothing against "relaxed", even though they are close.
+- **Mood over genre:** a user who cares mostly about genre may be shown songs from other genres that match their mood.
+- **Energy dominance:** energy carries the most points, so the system can favor songs that match on energy while differing in feel.
+- **Sparse catalog:** with 23 songs and most genres appearing once, a profile may have no close match (for example, only one rock song), and the top results will be filled by numeric similarity alone.
+- **Single taste:** a profile holds one genre and one mood, so it cannot express "chill or focused", and it has no way to exclude genres.
+- **Hand-picked weights and data:** the weights are my judgment, not fitted to data, and the feature values of the added songs are estimates.
 
 Some prompts to answer:
 
